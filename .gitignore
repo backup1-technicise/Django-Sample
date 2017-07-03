@@ -2,4 +2,4 @@ hwapp/bin
 hwapp/obj
 *.class
 *.pyc
-/CRUD_using_latest_Django/my_django_project/
+
