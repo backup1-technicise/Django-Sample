@@ -1,0 +1,269 @@
+from piston.handler import BaseHandler
+from client import IndivoClient
+from xml.dom import minidom as XML
+import xmltodict, json
+import xml.etree.ElementTree as ET
+from xml.etree.ElementTree import XML, fromstring, tostring
+import sys, string, os
+from django.http import HttpResponse
+from django.http import QueryDict 
+
+import urllib 
+import MySQLdb
+from api.models import employee_Tables
+
+def set_global():
+	global consumer_key, consumer_secret, SERVER_PARAMS, CONSUMER_PARAMS
+	consumer_key = 'curatehealth'
+	consumer_secret = 'curatehealth'
+	SERVER_PARAMS = {"api_base": "http://chart.mycuratio.com:8000",
+			 "authorization_base": "http://chart.mycuratio.com"}
+
+	CONSUMER_PARAMS = {"consumer_key": consumer_key,
+			   "consumer_secret": consumer_secret}
+
+class CalcHandler( BaseHandler ):
+	def read( self, request, x,y):		
+		s = int(x) + int(y)
+		return s	
+		#return x+" "+y
+		
+class BalodHandler( BaseHandler ):
+	def read( self, request, x,y,z):
+				
+		return x+" is a helooooooooo . but "+ y + " is a good boy. and z is"+z
+            
+class RitaTestApi( BaseHandler ):
+	def read( self, request, x):			
+	    set_global()
+	    # Set up the client (with no token): two-legged oauth only
+	    client = IndivoClient(SERVER_PARAMS, CONSUMER_PARAMS)
+	    resp, content = client.smart_allergies(record_id = x )
+	    return HttpResponse(content, mimetype='application/xml')
+
+class accountdeatilsbyidHandler( BaseHandler ):
+	def read( self, request, x):			
+	    set_global()
+	    account_id=x
+	    # Set up the client (with no token): two-legged oauth only
+	    client = IndivoClient(SERVER_PARAMS, CONSUMER_PARAMS)
+	    resp, content = client.account_info(account_email = account_id, body={'response_format':'application/json'} )
+	    return xmltodict.parse(content)  
+            #return HttpResponse(content, mimetype='application/json')
+
+
+
+class recordlistbyaccountidHandler( BaseHandler ):
+	def read( self, request, x):			
+	    set_global()
+	    account_id=x
+	    # Set up the client (with no token): two-legged oauth only
+	    client = IndivoClient(SERVER_PARAMS, CONSUMER_PARAMS)
+	    resp, content = client.record_list(account_email = account_id, body={'response_format':'application/xml'} )
+            return xmltodict.parse(content)  
+            #return json.loads(content)
+            #return HttpResponse(content, mimetype='application/json')
+
+class demographicsbyrecordidHandler( BaseHandler ):
+	def read( self, request, x):			
+            set_global()
+	    record_id=x
+	    # Set up the client (with no token): two-legged oauth only
+	    client = IndivoClient(SERVER_PARAMS, CONSUMER_PARAMS)
+	    resp, content = client.read_demographics(record_id = record_id, body={'response_format':'application/json'} )
+            #return xmltodict.parse(content)
+            return json.loads(content)
+#            return HttpResponse(content, mimetype='application/json')
+        
+class createRecordHandler( BaseHandler ):
+    def read( self, request, user, password, givenname,familyname, email, gender, dob,telephoneNumber,postalCode):       
+        set_global()
+       
+        user1 =user
+        password1=password
+        givenname1=givenname
+        familyname1=familyname
+        email1=email
+        gender1=gender
+        dob1=dob                
+        telephoneNumber1=telephoneNumber
+        postalCode1=postalCode
+        client = IndivoClient(SERVER_PARAMS, CONSUMER_PARAMS)        
+        resp, content = client.session_create({'username' : user , 'password' : password})        
+        #return resp
+        if resp['status'] != '200':
+            raise Exception("Bad Status: %s"%resp['status'])
+        result =  dict(item.split("=") for item in content.split("&"))	
+        account_id =  result['account_id']
+        xmlStart = '<Demographics xmlns="http://indivo.org/vocab/xml/documents#">'
+        demographics =  "%s<dateOfBirth>%s</dateOfBirth><gender>%s</gender><email>%s</email><Name><familyName>%s</familyName><givenName>%s</givenName></Name><Telephone><type>h</type><number>%s</number><preferred>true</preferred></Telephone><Address><country>USA</country><postalCode>%s</postalCode></Address></Demographics>"%(xmlStart,dob1,gender1,email1,familyname1,givenname1,telephoneNumber1,postalCode1)
+        res, content = client.record_create(body=demographics)
+        status = res['status']
+
+        #print "Record Create info: %s"%content
+
+        # success, parse XML and change owner to current user
+        if '200' == status:                
+                tree = ET.fromstring(content or '<Record/>')
+                if tree is not None:
+                        record_id = tree.attrib.get('id')    
+                        decoded_account_id = urllib.unquote(account_id).decode('utf8') 
+                        res, content = client.record_set_owner(record_id=record_id, body=decoded_account_id, content_type='text/plain')
+                        status = res['status']                        
+                        if '200' == status:
+                                #return HttpResponse(content, mimetype='application/json')
+                                return xmltodict.parse(content)  
+                        else:
+                                print "Failed to add record to: %s "%user
+                else:
+                        print "Record id not found: %s "%user
+        else:
+                print "Failed Create record to: %s "%user
+                
+class createAccountHandler( BaseHandler ):
+    def read( self, request,AccountEmail,AccountPassword, FullName):       
+        set_global()              
+        client = IndivoClient(SERVER_PARAMS, CONSUMER_PARAMS)  
+        
+#        resp, content = client.session_create({'username' : userSession , 'password' : passwordSession})        
+#        if resp['status'] != '200':
+#            raise Exception("Bad Status: %s"%resp['status'])
+        # CREATE NEW INDIVO ACCOUNT
+        res, content = client.account_create(body={'contact_email':AccountEmail,'account_id':AccountEmail,'full_name':FullName},content_type='application/json')
+        #return res
+        #return xmltodict.parse(content) 
+        status = res['status']
+        if '200' == status:
+            returnVal="accountCreated"
+            res, content = client.account_authsystem_add(account_email=AccountEmail ,body={'password': AccountPassword,'username':AccountEmail,'system':'password'},content_type='application/json')
+            return HttpResponse(res, mimetype='application/json')
+#            status = res['status']
+#            if '200' == status:
+#                returnVal=returnVal+" passWordSet"
+#            else:
+#                returnVal=res
+#            #return content
+        else:        
+            return HttpResponse(res, mimetype='application/json')
+#        #return returnVal
+#          return HttpResponse(content, mimetype='application/json')
+
+class testPostHandler( BaseHandler ):
+	def create( self, request):			
+            #if request.method == 'POST':
+            # @type request 
+			#print 'Request Method: "%s"' % request.method 
+            #print 'Request Content Type: "%s"' % request.content_type 
+            #print 'Raw Data: "%s"' % request.body 
+            
+            
+            parsedRequestBody = request.data #QueryDict(request.body)
+            print 'parsedRequestBody Data: "%s"' % parsedRequestBody 
+            #fname = parsedRequestBody.get('fname')
+            #lname = parsedRequestBody.get('lname')
+            #print 'First Name: "%s"' % fname 
+            #print 'Last Name: "%s"' % lname 
+            return 'its works ' + parsedRequestBody['fname'] + ' '+ parsedRequestBody['lname'] #HttpResponse("OK")
+
+class testPutHandler( BaseHandler ):
+    def update(self, request, post_id):
+		var1 = request.data['fname']
+		var2 = request.data['lname']   #        post.save()
+		return "Updated successfully" + " your ID is = " + post_id + " and Name: " + var1 + " " + var2
+
+
+#==================================================================
+
+class testAllHandler( BaseHandler ):
+    
+#    allowed_methods = ( 'POST', 'PUT')
+#    
+#    def read( self, request, post_id=None):
+#				
+#        return "GET call"
+
+                
+    def create( self, request):
+                    
+        var1 = request.data['fname']
+        var2 = request.data['lname']
+                            
+        return "POST call  " + var1 + " " + var2
+                                
+                                
+    def update(self, request):
+                                    
+        var1 = request.data['fname']
+        var2 = request.data['lname']
+                                            
+        return "PUT call  " + var1 + " " + var2
+
+#    def delete(self, request, post_id=None):
+#
+#        return "DELETE call"
+
+########################## Mysql DB Interaction by Abhisek #####################################
+class testDBInsertHandler( BaseHandler ):
+	def create(self, request):
+		# Creating an entry in EMP_INFO table in django_db database from MySQL
+		# Value taken from json file via. POST call using POST man
+		allowed_methods = ('POST')
+		model = employee_Tables
+		if request.method == 'POST':
+			ID = request.data['id']
+			name = request.data['name']
+			sex = request.data['sex']
+			age = request.data['age']
+
+			emp_info = employee_Tables(emp_ID = ID,emp_name = name,emp_age = age, emp_sex = sex)
+			emp_info.save()
+					
+class testDBReadHandler( BaseHandler ):
+	# Retrieving an entry from EMP_INFO table in django_db database from MySQL 
+	# using primary key emp_ID via. GET call
+	def read(self,request,emp_id):
+		allowed_methods = ('GET')
+		model = employee_Tables
+		if request.method == 'GET':
+			return employee_Tables.objects.filter(emp_ID=emp_id).values("emp_ID","emp_name","emp_age","emp_sex")
+			
+class POST_ReadHandler( BaseHandler ):
+	# Retrieving an entry from EMP_INFO table in django_db database from MySQL 
+	# using primary key emp_ID via. POST call
+	def create(self,request,**kwargs):
+		allowed_methods = ('POST')
+		model = employee_Tables
+		if request.method == 'POST':
+			ID = request.data['id']
+			return employee_Tables.objects.filter(emp_ID=ID).values("emp_ID","emp_name","emp_age","emp_sex")
+		
+class POST_UpdateHandler( BaseHandler ):
+	# Update an entry in EMP_INFO table in django_db database from MySQL 
+	# using primary key emp_ID via. POST call
+	def create(self,request):
+		allowed_methods = ('POST')
+		model = employee_Tables
+		if request.method == 'POST':
+			ID = request.data['id']
+			name = request.data['name']
+			## Update the emp_name as name where emp_ID is ID
+			emp_tuple = employee_Tables.objects.get(emp_ID=ID)
+			emp_tuple.emp_name = name
+			emp_tuple.save()
+			return employee_Tables.objects.filter(emp_ID=ID).values("emp_ID","emp_name","emp_age","emp_sex")
+
+class POST_DeleteHandler( BaseHandler ):
+	# Deleting an entry from EMP_INFO table in django_db database from MySQL 
+	# using primary key emp_ID via. POST call
+	def create(self,request):
+		allowed_methods = ('POST')
+		model = employee_Tables
+		if request.method == 'POST':
+			ID = request.data['id']
+			## Delete employee record based on emp_ID
+			emp_tuple = employee_Tables.objects.get(emp_ID=ID)
+			#emp_tuple.emp_name = name
+			emp_tuple.delete()
+			return employee_Tables.objects.filter(emp_ID=ID).values("emp_ID","emp_name","emp_age","emp_sex")
+
+			
