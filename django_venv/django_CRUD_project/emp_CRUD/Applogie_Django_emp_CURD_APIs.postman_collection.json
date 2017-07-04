@@ -1,0 +1,82 @@
+{
+	"variables": [],
+	"info": {
+		"name": "Applogie_Django_emp_CURD_APIs",
+		"_postman_id": "b2f872f1-606a-f3ad-e0fa-62dcedd6dab2",
+		"description": "It holds all REST APIs for emp_CRUD django project. This demo project consists of Django 1.11.3, Djago REST Framework, MySQL 5.6 and Python 2.7. The above requirements are alligened with Applogie project.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "http://127.0.0.1:9000/emp_CRUD/show_Employees/",
+			"request": {
+				"url": "http://127.0.0.1:9000/emp_CRUD/show_Employees/",
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "http://127.0.0.1:9000/emp_CRUD/update_employee_by_ID/E2/",
+			"request": {
+				"url": "http://127.0.0.1:9000/emp_CRUD/update_employee_by_ID/E2/",
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"emp_ID\":\"E2\",\n\t\"emp_name\": \"Amit Paul\", \n\t\"emp_age\": 28, \n\t\"emp_sex\": \"M\"\n}\n"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "http://127.0.0.1:9000/emp_CRUD/delete_employee_by_ID/E3/",
+			"request": {
+				"url": "http://127.0.0.1:9000/emp_CRUD/delete_employee_by_ID/E3/",
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "http://127.0.0.1:8000/emp_CRUD/create_Employee/",
+			"request": {
+				"url": "http://127.0.0.1:8000/emp_CRUD/create_Employee/",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"emp_ID\": \"E3\", \n\t\"emp_name\": \"Suman Barman\", \n\t\"emp_age\": 28, \n\t\"emp_sex\": \"M\"\n\t\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		}
+	]
+}
