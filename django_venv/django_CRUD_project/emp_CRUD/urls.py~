@@ -1,16 +1,44 @@
-from django.conf.urls import url
-#from django.conf.urls.defaults import *
-#from piston.resource import Resource
-#from piston.authentication import HttpBasicAuthentication
+from django.conf.urls import url, include
+from emp_CRUD.simple_views import emp_list,emp_create,get_emp_by_id,update_emp_by_id,delete_emp_by_id
+from rest_framework import routers
+from rest_framework_swagger.views import get_swagger_view
 
-
-
-
+from emp_CRUD import class_views
+'''
+# URLConf for simple_view
 urlpatterns = [ 
-	url( r'^show_Employees/$', views.emp_list ),
-	url( r'^create_Employee/$', views.emp_create ),
-	url( r'^show_employee_by_ID/(?P<emp_id>.*)/$', views.get_emp_by_id ),
-	url( r'^update_employee_by_ID/(?P<emp_id>.*)/$', views.update_emp_by_id ),
-	url( r'^delete_employee_by_ID/(?P<emp_id>.*)/$', views.delete_emp_by_id ),
+	url( r'^show_Employees/$', emp_list ),
+	url( r'^create_Employee/$', emp_create ),
+	url( r'^show_employee_by_ID/(?P<emp_id>.*)/$', get_emp_by_id ),
+	url( r'^update_employee_by_ID/(?P<emp_id>.*)/$',update_emp_by_id ),
+	url( r'^delete_employee_by_ID/(?P<emp_id>.*)/$', delete_emp_by_id ),
+]
+'''
+# URLConf for class_view
+
+router = routers.DefaultRouter()
+router.register(r'^show_Employees/$',class_views.EmpList,'showEmployees')
+router.register(r'^create_Employee/$',class_views.EmpList,'createEmployee')
+router.register(r'^show_employee_by_ID/(?P<emp_id>.*)',class_views.EmpList_details,'showemployeebyID')
+router.register(r'^update_employee_by_ID/(?P<emp_id>.*)',class_views.EmpList_details,'updateemployeebyID')
+router.register(r'^delete_employee_by_ID/(?P<emp_id>.*)',class_views.EmpList_details,'deleteemployeebyID')
+urlpatterns = [url(r'^api/', include(router.urls)),]
+
+'''
+#schema_view = get_swagger_view(title='emp_CRUD API')
+
+router.register(r'show_employee_by_ID', views.get_emp_by_id)
+router.register(r'update_employee_by_ID', views.update_emp_by_id)
+router.register(r'delete_employee_by_ID', views.delete_emp_by_id)
+
+urlpatterns = [
+    #url(r'^$', schema_view),
+    url(r'^api/', include(router.urls)),
+    url( r'^show_employee_by_ID/(?P<emp_id>.*)/$', views.get_emp_by_id ),
+    url( r'^update_employee_by_ID/(?P<emp_id>.*)/$', views.update_emp_by_id ),
+    url( r'^delete_employee_by_ID/(?P<emp_id>.*)/$', views.delete_emp_by_id ),
 ]
 
+urlpatterns = router.urls
+include('rest_framework_swagger.urls')
+'''

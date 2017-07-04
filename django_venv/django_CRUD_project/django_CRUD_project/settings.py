@@ -29,7 +29,6 @@ ALLOWED_HOSTS = []
 
 
 # Application definition
-
 INSTALLED_APPS = [
     # Uncomment the next line to enable the admin:
     #'django.contrib.admin',
@@ -40,11 +39,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sites',
     'rest_framework', # Inclusion of Djangorestframework for REST API
+    'rest_framework_swagger', # Inclusion of rest_framework_swagger for REST API
     #'emp_CRUD',  # For Django <= 1.9
     'emp_CRUD.apps.EmpCrudConfig' # Inclusion of APP for Django > 1.9
 ]
 
-#SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
