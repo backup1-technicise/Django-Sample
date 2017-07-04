@@ -12,7 +12,7 @@ class employee_Tables(models.Model):
    
 	class Meta:
 		db_table = 'EMP_INFO'
-		app_label = 'emp_CRUD'
+		#app_label = 'emp_CRUD'
 
 
 

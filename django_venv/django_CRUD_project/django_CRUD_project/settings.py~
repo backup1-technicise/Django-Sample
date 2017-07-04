@@ -38,8 +38,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.sites'
-    'emp_CRUD',
+    'django.contrib.sites',
+    'rest_framework', # Inclusion of Djangorestframework for REST API
+    #'emp_CRUD',  # For Django <= 1.9
+    'emp_CRUD.aps.EmpCrudConfig' # Inclusion of APP for Django > 1.9
 ]
 
 #SITE_ID = 1
