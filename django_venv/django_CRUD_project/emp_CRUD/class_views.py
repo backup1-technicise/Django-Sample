@@ -2,12 +2,12 @@
 from __future__ import unicode_literals
 
 from django.shortcuts import render
-
+'''
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.renderers import JSONRenderer
 from rest_framework.parsers import JSONParser
-
+'''
 from emp_CRUD.models import employee_Tables
 from emp_CRUD.serializers import EmployeeSerializer
 
@@ -20,100 +20,57 @@ from rest_framework import status
 # Create your views here.
 
 class EmpList(APIView):
+	"""
+    	GET all employees, or POST or create a new employee.
+    	"""
 
-	@csrf_exempt
-	def emp_list(request):
-    		"""
-    		GET all employees, or POST or create a new employee.
-    		"""
-    		if request.method == 'GET':
-        		employees = employee_Tables.objects.all()
-        		serializer = EmployeeSerializer(employees, many=True)
-        		return JsonResponse(serializer.data, safe=False)
+	def get(self, request, format=None): # format is optional but it can be used for format of a response 
+		employees = employee_Tables.objects.all()
+        	serializer = EmployeeSerializer(employees, many=True)
+        	return Response(serializer.data)
 
-
-	@csrf_exempt
-	def emp_create(request):
-    		if request.method == 'POST':
-        		data = JSONParser().parse(request)
-        		serializer = EmployeeSerializer(data=data)
-        		if serializer.is_valid():
-            			serializer.save()
-            			return JsonResponse(serializer.data, status=201)
-			else:
-            			return JsonResponse(serializer.errors, status=400)
+	def post(self, request, format=None):
+        	serializer = EmployeeSerializer(data=request.data)
+        	if serializer.is_valid():
+            		serializer.save()
+            		return Response(serializer.data, status=status.HTTP_201_CREATED)
+		else:        	
+			return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class EmpList_details(APIView):
-	@csrf_exempt
-	def get_emp_by_id(request, emp_id):
-		# Retrieve EMP by its emp ID
+	"""
+    	GET, PUT and DELETE for employees with attribute emp_ID
+    	"""
+	def get(self, request, emp_id, format=None): # format is optional but it can be used for format of a response 
+		# Retrieve EMP by its emp_ID
 		try:
         		emp = employee_Tables.objects.get(emp_ID=emp_id)
-    		except emp.DoesNotExist:
-        		return HttpResponse(status=404)
-  
-		if request.method == 'GET':
         		serializer = EmployeeSerializer(emp)
-        		return JsonResponse(serializer.data)
-
-
-	@csrf_exempt
-	def update_emp_by_id(request, emp_id):
-		# Retrieve EMP by its emp ID
+        		return Response(serializer.data)
+    		except emp.DoesNotExist:
+        		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+	
+	def put(self, request, emp_id, format=None):
+		# Update an EMP by its emp_ID
 		try:
         		emp = employee_Tables.objects.get(emp_ID=emp_id)
-    		except emp.DoesNotExist:
-        		return HttpResponse(status=404)
-  
-		if request.method == 'PUT':
-        		data = JSONParser().parse(request)
-        		serializer = EmployeeSerializer(emp, data=data)
+			serializer = EmployeeSerializer(emp, data=request.data)
         		if serializer.is_valid():
             			serializer.save()
-            			return JsonResponse(serializer.data)
+            			return Response(serializer.data)
 			else:
-        			return JsonResponse(serializer.errors, status=400)
-
-
-	@csrf_exempt
-	def delete_emp_by_id(request, emp_id):
-		# Retrieve EMP by its emp ID
+        			return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    		except emp.DoesNotExist:
+        		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+  
+	def delete(request, emp_id):
+		# Delete an EMP by its emp_ID
 		try:
         		emp = employee_Tables.objects.get(emp_ID=emp_id)
+			emp.delete()
+        		return Response(status=status.HTTP_204_NO_CONTENT)
+
     		except emp.DoesNotExist:
-        		return HttpResponse(status=404)
+        		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-		if request.method == 'DELETE':
-        		emp.delete()
-        		return HttpResponse(status=204)
-
-
-
-
-'''
-@csrf_exempt
-def snippet_detail(request, pk):
-    """
-    Retrieve, update or delete a code snippet.
-    """
-    try:
-        snippet = Snippet.objects.get(pk=pk)
-    except Snippet.DoesNotExist:
-        return HttpResponse(status=404)
-
-    if request.method == 'GET':
-        serializer = SnippetSerializer(snippet)
-        return JsonResponse(serializer.data)
-
-    elif request.method == 'PUT':
-        data = JSONParser().parse(request)
-        serializer = SnippetSerializer(snippet, data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return JsonResponse(serializer.data)
-        return JsonResponse(serializer.errors, status=400)
-
-    elif request.method == 'DELETE':
-        snippet.delete()
-        return HttpResponse(status=204)
-'''
+		
