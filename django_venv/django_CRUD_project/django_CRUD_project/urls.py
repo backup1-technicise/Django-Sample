@@ -19,7 +19,7 @@ from django.conf.urls import url,include
 urlpatterns = [
     #url(r'^admin/', admin.site.urls),
     #url(r'^emp_CRUD/', include('emp_CRUD.urls')), # For simple_view
-    url(r'^api', include('emp_CRUD.urls')), # For class_views 
+    #url(r'^emp_CRUD/', include('emp_CRUD.urls')), # For class_views
+    url(r'^emp_CRUD/', include('emp_CRUD.urls')), # For viewset and router
 ]
-
 
